@@ -1,27 +1,19 @@
 const puppeteer = require('puppeteer');
-const pry = require('pryjs');
 const _ = require('lodash')
 
-var desired_areas = [1,2,4,6] // Desired areas in dublin
-var maximum_price_per_bedroom = 1000 // The maximum price you wish to pay
+const desired_areas = [1,2,4,6] // Desired areas in dublin
+const maximum_price_per_bedroom = 1000 // The maximum price you wish to pay
+
+function remove_nondigits(str) { return Number(str.replace(/\D/g,'')) }
 
 function build_urls(areas) {
-  urls = areas.map(area => {
-    return [1,2,3,4,5,6].map((i) => {
-      var x = ({
-        "area": area,
-        "url": "http://www.daft.ie/dublin-city/residential-property-for-rent/dublin-" + area + "/?s[mxp]=" + maximum_price_per_bedroom * i + "&s[mnb]=" + i + "&s[sort_by]=price&s[sort_type]=a"
-      })
-      return x
-    })
-  })
+  urls = areas.map(area => [1,2,3,4,5,6].map(i => ({
+    "area": area,
+    "url": "http://www.daft.ie/dublin-city/residential-property-for-rent/dublin-" + area + "/?s[mxp]=" + maximum_price_per_bedroom * i + "&s[mnb]=" + i + "&s[sort_by]=price&s[sort_type]=a"
+  })))
 
   return _.flatten(urls)
 }
-
-const area_urls = build_urls(desired_areas)
-
-function remove_nondigits(str) { return Number(str.replace(/\D/g,'')) }
 
 async function fetch_ads(area_url) {
   const browser = await puppeteer.launch();
@@ -51,7 +43,7 @@ async function fetch_ads(area_url) {
   return ads
 }
 
-ads = Promise.all(area_urls.map(fetch_ads))
+ads = Promise.all(build_urls(desired_areas).map(fetch_ads))
   .then(ads => _.flatten(ads))
-  .then(ads => _.sortBy(ads, [(ad) => ad.price_per_room]))
+  .then(ads => _.sortBy(ads, [ad => ad.price_per_room]))
   .then(console.log)
