@@ -1,38 +1,49 @@
 const puppeteer = require('puppeteer');
 const pry = require('pryjs');
+const _ = require('lodash')
 
 // Min 3 beds, 3000
 
 var desired_areas = [1,2,4,6]
 
 function build_urls(areas) {
-  return areas.map(function(area) {
-    return "http://www.daft.ie/dublin-city/residential-property-for-rent/dublin-" + area + "/?s[mxp]=5000&s[mnb]=4&s[sort_by]=price&s[sort_type]=a"
+  return areas.map(area => {
+    url = "http://www.daft.ie/dublin-city/residential-property-for-rent/dublin-" + area + "/?s[mxp]=5000&s[mnb]=4&s[sort_by]=price&s[sort_type]=a"
+    return({ "area": area, "url": url })
   })
 }
 
-var urls = build_urls(desired_areas)
+function remove_nondigits(str) { return Number(str.replace(/\D/g,'')) }
 
-urls.forEach((url, index) => {
-  (async() => { 
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    await page.setViewport({width: 1920, height: 1080})
-    await page.goto(url);
-    const ads = await page.$$eval('.sr_counter + a', ads => ads.map(ad => ad.href))
-    console.log(ads)
+var area_urls = build_urls(desired_areas)
 
-    await page.screenshot({path: 'something' + index + '.jpg'})
-    
-    browser.close()
-  })()
-})
+async function fetch_ads(area_url) {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.setViewport({width: 1920, height: 1080})
+  await page.goto(area_url.url);
 
+  const ad_urls = await page.$$eval('.sr_counter + a', ads => ads.map(ad => ad.href))
+  const addresses = await page.$$eval('.sr_counter + a', ads => ads.map(ad => ad.innerText))
+  const prices = await page.$$eval('.price', ads => ads.map(ad => ad.innerText))
+  const bedrooms = await page.$$eval('.info li:nth-child(2)', ads => ads.map(ad => ad.innerText))
 
-// const LINKS_SELECTOR = 'a'
-// const the2ndHref = await page.evaluate(selector => {
-//   const allLinks = document.querySelectorAll(selector)
-//   return allLinks[1].href
-// }, LINKS_SELECTOR)
+  ads = ad_urls.map((ad_url, index) => {
+    bedrooms_qty = remove_nondigits(bedrooms[index])
+    return {
+      "area": area_url.area,
+      "address": addresses[index],
+      "ad_url": ad_url,
+      "bedrooms_qty": remove_nondigits(bedrooms[index]),
+      "price_per_room": remove_nondigits(prices[index]) / bedrooms_qty
+    }
+  })
+  
+  browser.close()
+  return ads
+}
 
-// console.log('the2ndHref', the2ndHref)
+ads = Promise.all(area_urls.map(fetch_ads))
+  .then(ads => _.flatten(ads))
+  .then(ads => _.sortBy(ads, [(ad) => ad.price_per_room]))
+  .then(console.log)
