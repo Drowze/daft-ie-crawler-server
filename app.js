@@ -2,7 +2,7 @@ const puppeteer = require('puppeteer');
 const _ = require('lodash')
 const express = require('express')
 const app = express()
-var port = process.env.PORT || 3000
+var port = process.env.PORT || 3001
 
 const desired_areas = [1,2,4,6] // Desired areas in dublin
 const maximum_price_per_bedroom = 1000 // The maximum price you wish to pay
@@ -10,10 +10,11 @@ const maximum_price_per_bedroom = 1000 // The maximum price you wish to pay
 function remove_nondigits(str) { return Number(str.replace(/\D/g,'')) }
 
 function build_urls(areas) {
-  urls = areas.map(area => [1,2].map(i => ({
+  urls = areas.map(area => [1,2,3,4,5,6].map(i => ({
     "area": area,
     "url": "http://www.daft.ie/dublin-city/residential-property-for-rent/dublin-" + area + "/?s[mxp]=" + maximum_price_per_bedroom * i + "&s[mnb]=" + i + "&s[sort_by]=price&s[sort_type]=a"
   })))
+  console.log(_.flatten(urls))
 
   return _.flatten(urls)
 }
@@ -21,7 +22,6 @@ function build_urls(areas) {
 async function fetch_ads(area_url) {
   const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   const page = await browser.newPage();
-  console.log(area_url.url)
   await page.goto(area_url.url);
 
   const ad_urls = await page.$$eval('.sr_counter + a', ads => ads.map(ad => ad.href));
@@ -46,11 +46,23 @@ async function fetch_ads(area_url) {
   return ads
 }
 
-app.get('/', (request, response) => {
+app.use(function(req, res, next) {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+});
+
+app.get('/api', (req, res) => {
+  areas = req.query.areas
+  console.log(areas)
+
   ads = Promise.all(build_urls(desired_areas).map(fetch_ads))
     .then(ads => _.flatten(ads))
+    .then(ads => _.uniqBy(ads, (ad => ad.ad_url)))
     .then(ads => _.sortBy(ads, [ad => ad.price_per_room]))
-    .then(ads => response.send(ads))
+    .then(ads => {
+      return res.send(ads)
+    })
     .catch(console.log)
 })
 
