@@ -4,15 +4,26 @@ const express = require('express')
 const app = express()
 var port = process.env.PORT || 3001
 
-const desired_areas = [1,2,4,6] // Desired areas in dublin
-const maximum_price_per_bedroom = 1000 // The maximum price you wish to pay
+const desired_areas = [
+  'dublin-1',
+  'dublin-2',
+  'dublin-4',
+  'dublin-6',
+  'dublin-6w',
+  'dublin-7',
+  'dublin-8',
+  'dublin-14',
+  'sandyford',
+  'rathmines',
+  'ballsbridge'] // Desired areas in dublin
+const maximum_price_per_bedroom = 800 // The maximum price you wish to pay
 
 function remove_nondigits(str) { return Number(str.replace(/\D/g,'')) }
 
 function build_urls(areas) {
-  urls = areas.map(area => [1,2,3,4,5,6].map(i => ({
+  urls = areas.map(area => [1,2,3,4].map(i => ({
     "area": area,
-    "url": "http://www.daft.ie/dublin-city/residential-property-for-rent/dublin-" + area + "/?s[mxp]=" + maximum_price_per_bedroom * i + "&s[mnb]=" + i + "&s[sort_by]=price&s[sort_type]=a"
+    "url": "http://www.daft.ie/dublin-city/residential-property-for-rent/" + area + "/?s[mxp]=" + maximum_price_per_bedroom * i + "&s[mnb]=" + i + "&s[sort_by]=price&s[sort_type]=a"
   })))
   console.log(_.flatten(urls))
 
@@ -22,7 +33,7 @@ function build_urls(areas) {
 async function fetch_ads(area_url) {
   const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   const page = await browser.newPage();
-  await page.goto(area_url.url);
+  await page.goto(area_url.url, {timeout: 0});
 
   const ad_urls = await page.$$eval('.sr_counter + a', ads => ads.map(ad => ad.href));
   const addresses = await page.$$eval('.sr_counter + a', ads => ads.map(ad => ad.innerText));
