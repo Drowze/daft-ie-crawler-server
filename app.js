@@ -15,13 +15,15 @@ const desired_areas = [
   'dublin-14',
   'sandyford',
   'rathmines',
-  'ballsbridge'] // Desired areas in dublin
-const maximum_price_per_bedroom = 800 // The maximum price you wish to pay
+  'ballsbridge'] // Desired areas in dublin, matching daft.ie url
+const maximum_price_per_bedroom = 800 // The maximum price you wish to pay per room
 
 function remove_nondigits(str) { return Number(str.replace(/\D/g,'')) }
 
 function build_urls(areas) {
-  urls = areas.map(area => [1,2,3,4].map(i => ({
+  desired_rooms_qty = [3,4]
+
+  urls = areas.map(area => desired_rooms_qty.map(i => ({
     "area": area,
     "url": "http://www.daft.ie/dublin-city/residential-property-for-rent/" + area + "/?s[mxp]=" + maximum_price_per_bedroom * i + "&s[mnb]=" + i + "&s[sort_by]=price&s[sort_type]=a"
   })))
