@@ -92,7 +92,7 @@ app.get('/api', (req, res) => {
 
   Cluster.launch({
     concurrency: Cluster.CONCURRENCY_CONTEXT,
-    maxConcurrency: 2,
+    maxConcurrency: 5,
     puppeteerOptions: { args: ['--no-sandbox', '--disable-setuid-sandbox'] },
   }).then(cluster => {
       cluster.task(clustered_fetch_ads)
