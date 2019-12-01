@@ -5,8 +5,6 @@ const app = express()
 var port = process.env.PORT || 3001
 
 const desired_areas = [
-  'dublin-1',
-  'dublin-2',
   'dublin-4',
   'dublin-6',
   'dublin-6w',
@@ -21,7 +19,7 @@ const maximum_price_per_bedroom = 800 // The maximum price you wish to pay per r
 function remove_nondigits(str) { return Number(str.replace(/\D/g,'')) }
 
 function build_urls(areas) {
-  desired_rooms_qty = [3,4]
+  desired_rooms_qty = [1,2]
 
   urls = areas.map(area => desired_rooms_qty.map(i => ({
     "area": area,
