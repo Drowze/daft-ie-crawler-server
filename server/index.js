@@ -31,32 +31,6 @@ function build_urls(areas) {
   return _.flatten(urls)
 }
 
-async function fetch_ads(browser, area_url) {
-  const page = await browser.newPage();
-  await page.goto(area_url.url, {timeout: 0});
-
-  const ad_urls = await page.$$eval('.sr_counter + a', ads => ads.map(ad => ad.href));
-  const addresses = await page.$$eval('.sr_counter + a', ads => ads.map(ad => ad.innerText));
-  const prices = await page.$$eval('.price', ads => ads.map(ad => ad.innerText));
-  const bedrooms = await page.$$eval('.info li:nth-child(2)', ads => ads.map(ad => ad.innerText));
-  const images = await page.$$eval('.box .main_photo', ads => ads.map(ad => ad.src));
-  await page.close();
-
-  ads = ad_urls.map((ad_url, index) => {
-    bedrooms_qty = remove_nondigits(bedrooms[index])
-    return {
-      "area": area_url.area,
-      "address": addresses[index],
-      "ad_url": ad_url,
-      "image": images[index],
-      "bedrooms_qty": remove_nondigits(bedrooms[index]),
-      "price_per_room": remove_nondigits(prices[index]) / bedrooms_qty,
-      "total_price": prices[index]
-    }
-  })
-  return ads
-}
-
 async function clustered_fetch_ads({ page, data: area_url }) {
   await page.goto(area_url.url, {timeout: 0});
   const ad_urls = await page.$$eval('.sr_counter + a', ads => ads.map(ad => ad.href));

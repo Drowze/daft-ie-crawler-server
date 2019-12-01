@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js"
+    "start": "node server",
+    "build": "cd react-ui/ && npm install && npm run build"
   },
   "author": "drowze",
   "license": "MIT",
