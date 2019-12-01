@@ -9,17 +9,17 @@ const desired_areas = [
   'dublin-6',
   'dublin-6w',
   'dublin-7',
-  'dublin-8',
-  'dublin-14',
-  'sandyford',
-  'rathmines',
+  // 'dublin-8',
+  // 'dublin-14',
+  // 'sandyford',
+  // 'rathmines',
   'ballsbridge'] // Desired areas in dublin, matching daft.ie url
 const maximum_price_per_bedroom = 800 // The maximum price you wish to pay per room
 
 function remove_nondigits(str) { return Number(str.replace(/\D/g,'')) }
 
 function build_urls(areas) {
-  desired_rooms_qty = [2, 3]
+  desired_rooms_qty = [3]
 
   urls = areas.map(area => desired_rooms_qty.map(i => ({
     "area": area,
