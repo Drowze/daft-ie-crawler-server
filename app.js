@@ -90,8 +90,11 @@ app.use(function(req, res, next) {
 app.get('/api', (req, res) => {
   urls = build_urls(desired_areas)
 
-  Cluster.launch({ concurrency: Cluster.CONCURRENCY_CONTEXT, maxConcurrency: 2 })
-    .then(cluster => {
+  Cluster.launch({
+    concurrency: Cluster.CONCURRENCY_CONTEXT,
+    maxConcurrency: 2,
+    puppeteerOptions: { args: ['--no-sandbox', '--disable-setuid-sandbox'] },
+  }).then(cluster => {
       cluster.task(clustered_fetch_ads)
         .then(() => Promise.all(urls.map(url => cluster.execute(url))))
         .then(ads => {
