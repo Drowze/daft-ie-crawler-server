@@ -2,7 +2,7 @@ const puppeteer = require('puppeteer');
 const _ = require('lodash');
 const express = require('express')
 const app = express()
-var port = process.env.PORT || 3001
+const port = process.env.PORT || 3001
 
 const desired_areas = [
   'dublin-4',
@@ -19,7 +19,7 @@ const maximum_price_per_bedroom = 800 // The maximum price you wish to pay per r
 function remove_nondigits(str) { return Number(str.replace(/\D/g,'')) }
 
 function build_urls(areas) {
-  desired_rooms_qty = [2]
+  desired_rooms_qty = [2, 3]
 
   urls = areas.map(area => desired_rooms_qty.map(i => ({
     "area": area,
@@ -30,8 +30,7 @@ function build_urls(areas) {
   return _.flatten(urls)
 }
 
-async function fetch_ads(area_url) {
-  const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+async function fetch_ads(browser, area_url) {
   const page = await browser.newPage();
   await page.goto(area_url.url, {timeout: 0});
 
@@ -41,7 +40,6 @@ async function fetch_ads(area_url) {
   const bedrooms = await page.$$eval('.info li:nth-child(2)', ads => ads.map(ad => ad.innerText));
   const images = await page.$$eval('.box .main_photo', ads => ads.map(ad => ad.src));
   await page.close();
-  await browser.close();
 
   ads = ad_urls.map((ad_url, index) => {
     bedrooms_qty = remove_nondigits(bedrooms[index])
@@ -67,15 +65,19 @@ app.use(function(req, res, next) {
 app.get('/api', (req, res) => {
   areas = req.query.areas
   console.log(areas)
-
-  ads = Promise.all(build_urls(desired_areas).map(fetch_ads))
-    .then(ads => _.flatten(ads))
-    .then(ads => _.uniqBy(ads, (ad => ad.ad_url)))
-    .then(ads => _.sortBy(ads, [ad => ad.price_per_room]))
-    .then(ads => {
-      return res.send(ads)
+  puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] })
+    .then(browser => {
+      Promise.all(
+        build_urls(desired_areas).map(url => { return fetch_ads(browser, url) })
+      ).then(ads => _.flatten(ads))
+       .then(ads => _.uniqBy(ads, (ad => ad.ad_url)))
+       .then(ads => _.sortBy(ads, [ad => ad.price_per_room]))
+       .then(ads => {
+         browser.close;
+         return res.send(ads);
+       })
+       .catch(console.log)
     })
-    .catch(console.log)
 })
 
 app.listen(port, (err) => {
