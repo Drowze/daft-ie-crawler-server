@@ -101,6 +101,7 @@ app.get('/api', (req, res) => {
         .then(ads => _.uniqBy(ads, (ad => ad.ad_url)))
         .then(ads => _.sortBy(ads, [ad => ad.price_per_room]))
         .then(ads => {
+          console.log('OK')
           return res.send(ads);
         })
       .catch(console.log)
