@@ -1,5 +1,5 @@
 const puppeteer = require('puppeteer');
-const _ = require('lodash')
+const _ = require('lodash');
 const express = require('express')
 const app = express()
 var port = process.env.PORT || 3001
@@ -19,7 +19,7 @@ const maximum_price_per_bedroom = 800 // The maximum price you wish to pay per r
 function remove_nondigits(str) { return Number(str.replace(/\D/g,'')) }
 
 function build_urls(areas) {
-  desired_rooms_qty = [1,2]
+  desired_rooms_qty = [2]
 
   urls = areas.map(area => desired_rooms_qty.map(i => ({
     "area": area,
@@ -40,7 +40,8 @@ async function fetch_ads(area_url) {
   const prices = await page.$$eval('.price', ads => ads.map(ad => ad.innerText));
   const bedrooms = await page.$$eval('.info li:nth-child(2)', ads => ads.map(ad => ad.innerText));
   const images = await page.$$eval('.box .main_photo', ads => ads.map(ad => ad.src));
-  browser.close();
+  await page.close();
+  await browser.close();
 
   ads = ad_urls.map((ad_url, index) => {
     bedrooms_qty = remove_nondigits(bedrooms[index])
