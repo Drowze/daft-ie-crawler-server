@@ -59,13 +59,17 @@ async function clustered_fetch_ads({ page, data: area_url }) {
 app.use(express.static(path.resolve(__dirname, '../react-ui/build')));
 
 app.get('/api', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
   res.set('Content-Type', 'application/json');
 
-  urls = build_urls(desired_areas)
+  urls = build_urls(desired_areas);
+  max_concurrency = req.query.concurrency || 5;
+  console.log(max_concurrency);
 
   Cluster.launch({
     concurrency: Cluster.CONCURRENCY_CONTEXT,
-    maxConcurrency: 5,
+    maxConcurrency: max_concurrency,
     puppeteerOptions: { args: ['--no-sandbox', '--disable-setuid-sandbox'] },
   }).then(cluster => {
       cluster.task(clustered_fetch_ads)
